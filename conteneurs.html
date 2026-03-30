@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a1628">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Terminal — Localisation Conteneurs</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#0a1628; --bg2:#0f1f3d; --bg3:#162544; --card:#1a2d50;
+  --border:#2a4070; --border2:#3a5490;
+  --accent:#00c8ff; --accent2:#0096cc;
+  --green:#00e5a0; --amber:#ffb340; --red:#ff5c5c;
+  --text:#e8f0ff; --text2:#8aa4cc; --text3:#506080;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  --r:10px; --r2:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;overscroll-behavior:none;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.screen{display:none;min-height:100vh;flex-direction:column;} .screen.active{display:flex;}
+
+#loginScreen{align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#162a5a 0%,var(--bg) 70%);padding:24px;}
+.login-box{width:100%;max-width:360px;background:var(--card);border:0.5px solid var(--border2);border-radius:16px;padding:36px 28px;text-align:center;}
+.login-logo{width:64px;height:64px;margin:0 auto 20px;background:var(--bg2);border:1px solid var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;}
+.login-box h1{font-size:20px;font-weight:600;margin-bottom:4px;}
+.login-box p{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6;}
+.pwd-input{width:100%;padding:14px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:18px;font-family:var(--mono);letter-spacing:0.2em;text-align:center;outline:none;transition:border-color .2s;margin-bottom:16px;}
+.pwd-input:focus{border-color:var(--accent);}
+.pwd-input::placeholder{letter-spacing:0;font-family:var(--sans);color:var(--text3);font-size:14px;}
+.btn-login{width:100%;padding:14px;background:var(--accent);color:var(--bg);font-weight:600;font-size:16px;font-family:var(--sans);border:none;border-radius:var(--r);cursor:pointer;}
+.btn-login:active{opacity:.85;}
+.login-error{margin-top:14px;font-size:13px;color:var(--red);display:none;}
+
+.topbar{background:var(--bg2);border-bottom:0.5px solid var(--border);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-title{font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--accent);font-family:var(--mono);}
+.topbar-right{display:flex;gap:8px;align-items:center;}
+.btn-icon{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--r2);padding:7px 11px;cursor:pointer;font-size:13px;color:var(--text2);font-family:var(--sans);white-space:nowrap;}
+.btn-icon.quit{background:rgba(255,92,92,.1);border-color:rgba(255,92,92,.3);color:var(--red);}
+
+.progress-wrap{padding:12px 16px 0;}
+.steps-row{display:flex;gap:6px;}
+.step-seg{flex:1;height:3px;border-radius:2px;background:var(--bg3);transition:background .3s;}
+.step-seg.done{background:var(--green);} .step-seg.active{background:var(--accent);}
+.steps-label{display:flex;justify-content:space-between;margin-top:6px;}
+.steps-label span{font-size:10px;color:var(--text3);font-family:var(--mono);}
+.steps-label span.active-lbl{color:var(--accent);}
+
+.content{flex:1;padding:16px;overflow-y:auto;}
+.sec-title{font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:10px;}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.chip{padding:4px 10px;border-radius:20px;font-size:12px;font-family:var(--mono);border:0.5px solid;}
+.chip-blue{background:rgba(0,200,255,.1);border-color:rgba(0,200,255,.3);color:var(--accent);}
+.chip-amber{background:rgba(255,179,64,.1);border-color:rgba(255,179,64,.3);color:var(--amber);}
+.chip-green{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--green);}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.sel-btn{padding:16px 8px;text-align:center;background:var(--card);border:0.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:14px;cursor:pointer;transition:all .2s;font-family:var(--sans);line-height:1.4;}
+.sel-btn:active{transform:scale(.97);}
+.sel-btn.active{background:rgba(0,200,255,.12);border-color:var(--accent);color:var(--accent);}
+.sel-btn .sub{font-size:11px;color:var(--text3);margin-top:5px;font-family:var(--mono);}
+.sel-btn.active .sub{color:var(--accent2);}
+
+.input-group{display:flex;gap:10px;margin-bottom:8px;}
+.input-group input{flex:1;padding:13px 14px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:18px;font-family:var(--mono);outline:none;transition:border-color .2s;text-transform:uppercase;}
+.input-group input:focus{border-color:var(--accent);}
+.hint-txt{font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:16px;}
+
+.cam-wrap{background:var(--bg2);border:1px dashed var(--border2);border-radius:var(--r);overflow:hidden;position:relative;min-height:210px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+#videoEl{width:100%;max-height:260px;object-fit:cover;display:none;}
+#canvasEl{display:none;}
+.cam-ph{text-align:center;padding:28px 20px;color:var(--text3);}
+.cam-ph p{font-size:13px;margin-top:10px;}
+.scan-overlay{position:absolute;inset:0;background:rgba(10,22,40,.55);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.scan-line{position:absolute;left:12%;right:12%;height:2px;background:var(--green);box-shadow:0 0 10px var(--green);animation:scanAnim 2s linear infinite;}
+@keyframes scanAnim{0%{top:15%}100%{top:85%}}
+.scan-txt{color:var(--green);font-size:13px;font-family:var(--mono);font-weight:500;position:relative;}
+
+.result-card{background:var(--card);border:0.5px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:14px;}
+.result-label{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px;letter-spacing:.05em;}
+.result-input{width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r2);color:var(--accent);font-size:24px;font-family:var(--mono);font-weight:600;padding:10px 12px;outline:none;text-transform:uppercase;letter-spacing:.1em;transition:border-color .2s;}
+.result-input:focus{border-color:var(--accent);}
+
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.btn{padding:13px;border-radius:var(--r);font-size:14px;font-family:var(--sans);cursor:pointer;transition:all .15s;border:0.5px solid;font-weight:500;text-align:center;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;font-size:15px;}
+.btn-outline{background:transparent;color:var(--text2);border-color:var(--border2);}
+.btn-success{background:rgba(0,229,160,.12);color:var(--green);border-color:rgba(0,229,160,.4);}
+.btn-danger{background:rgba(255,92,92,.1);color:var(--red);border-color:rgba(255,92,92,.3);}
+.btn-excel{background:rgba(0,229,160,.15);color:var(--green);border-color:rgba(0,229,160,.5);font-size:15px;font-weight:600;}
+.btn-full{grid-column:1/-1;}
+.btn-back{background:transparent;color:var(--text3);border-color:var(--border);font-size:13px;width:100%;margin-bottom:8px;}
+
+.table-wrap{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{background:var(--bg3);padding:8px 10px;text-align:left;color:var(--text3);font-weight:500;font-family:var(--mono);font-size:10px;letter-spacing:.06em;}
+.tbl td{padding:10px;border-top:0.5px solid var(--border);color:var(--text);vertical-align:middle;}
+.tbl tr:hover td{background:rgba(0,200,255,.03);}
+.num-cell{font-family:var(--mono);font-weight:600;color:var(--accent);font-size:12px;}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:2px 6px;border-radius:4px;line-height:1;}
+.del-btn:hover{color:var(--red);}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-family:var(--mono);font-size:13px;line-height:2;}
+
+.counter-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.counter-val{font-size:30px;font-weight:600;font-family:var(--mono);color:var(--accent);}
+.counter-lbl{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:2px;}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);font-size:13px;font-family:var(--mono);padding:11px 20px;border-radius:24px;z-index:999;transition:transform .3s ease;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:rgba(0,229,160,.5);color:var(--green);}
+.toast.err{border-color:rgba(255,92,92,.5);color:var(--red);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(10,22,40,.88);display:none;align-items:center;justify-content:center;z-index:200;padding:24px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--card);border:0.5px solid var(--border2);border-radius:14px;padding:28px 24px;width:100%;max-width:340px;text-align:center;}
+.modal h2{font-size:17px;font-weight:600;margin-bottom:10px;}
+.modal p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:22px;}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <rect x="2" y="10" width="32" height="22" rx="3" stroke="#00c8ff" stroke-width="1.5"/>
+        <path d="M8 10V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3" stroke="#00c8ff" stroke-width="1.5"/>
+        <line x1="10" y1="19" x2="26" y2="19" stroke="#00c8ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="10" y1="24" x2="20" y2="24" stroke="#00c8ff" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>Terminal Portuaire</h1>
+    <p>Localisation des conteneurs<br>Dar Salam &amp; TAC</p>
+    <input class="pwd-input" type="password" id="pwdInput" placeholder="Mot de passe" maxlength="20"
+           autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button class="btn-login" onclick="doLogin()">Accéder</button>
+    <div class="login-error" id="loginErr">❌ Mot de passe incorrect</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-title">TERMINAL // LOC</div>
+    <div class="topbar-right">
+      <button class="btn-icon" onclick="goList()">📋 <span id="listCount">0</span></button>
+      <button class="btn-icon quit" onclick="confirmQuit()">⏻ Quitter</button>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="steps-row">
+      <div class="step-seg" id="seg1"></div>
+      <div class="step-seg" id="seg2"></div>
+      <div class="step-seg" id="seg3"></div>
+      <div class="step-seg" id="seg4"></div>
+    </div>
+    <div class="steps-label">
+      <span id="lbl1">Zone</span>
+      <span id="lbl2">Sous-zone</span>
+      <span id="lbl3">Ligne</span>
+      <span id="lbl4">Conteneur</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- S1 : Zone -->
+    <div id="s1">
+      <div class="sec-title">Étape 1 — Zone</div>
+      <div class="grid2">
+        <div class="sel-btn" id="zBtn_DS" onclick="selectZone('DAR SALAM')">
+          Dar Salam<div class="sub">6 cavaliers · L1–L15</div>
+        </div>
+        <div class="sel-btn" id="zBtn_TAC" onclick="selectZone('TAC')">
+          TAC<div class="sub">Nord / Sud · L1–L40</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S2 : Sous-zone -->
+    <div id="s2" style="display:none">
+      <div class="chips" id="ctxChips1"></div>
+      <div class="sec-title">Étape 2 — Sous-zone</div>
+      <div id="subGrid"></div>
+      <button class="btn btn-back" onclick="goStep(1)">← Retour</button>
+    </div>
+
+    <!-- S3 : Ligne -->
+    <div id="s3" style="display:none">
+      <div class="chips" id="ctxChips2"></div>
+      <div class="sec-title">Étape 3 — Ligne</div>
+      <div class="input-group">
+        <input type="text" id="ligneInput" placeholder="Ex : L1" maxlength="4" inputmode="numeric" />
+        <button class="btn btn-primary" style="white-space:nowrap;padding:13px 20px;" onclick="confirmLigne()">OK</button>
+      </div>
+      <div class="hint-txt" id="ligneHint"></div>
+      <button class="btn btn-back" onclick="goStep(2)">← Retour</button>
+    </div>
+
+    <!-- S4 : Scan -->
+    <div id="s4" style="display:none">
+      <div class="chips" id="ctxChips3"></div>
+      <div class="sec-title">Étape 4 — Scanner le conteneur</div>
+      <div class="cam-wrap">
+        <video id="videoEl" autoplay playsinline></video>
+        <canvas id="canvasEl"></canvas>
+        <div class="scan-overlay" id="scanOverlay">
+          <div class="scan-line"></div>
+          <div class="scan-txt">Analyse OCR en cours...</div>
+        </div>
+        <div class="cam-ph" id="camPh">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <rect x="4" y="12" width="44" height="32" rx="5" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="26" cy="28" r="9" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="18" y="7" width="16" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="26" cy="28" r="4" fill="currentColor" opacity="0.25"/>
+          </svg>
+          <p>Caméra non active</p>
+        </div>
+      </div>
+      <div id="ocrBox" style="display:none">
+        <div class="result-card">
+          <div class="result-label">N° DÉTECTÉ — VÉRIFIEZ ET CORRIGEZ SI NÉCESSAIRE</div>
+          <input class="result-input" id="numField" type="text" placeholder="XXXX0000000" maxlength="15" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" id="camBtn" onclick="toggleCamera()">📷 Caméra</button>
+        <button class="btn btn-outline" id="captureBtn" style="display:none" onclick="captureAndOCR()">⚡ Capturer</button>
+        <button class="btn btn-outline" onclick="manualEntry()">⌨️ Manuel</button>
+        <button class="btn btn-success btn-full" id="confirmBtn" style="display:none" onclick="confirmContainer()">✓ Confirmer et enregistrer</button>
+      </div>
+      <button class="btn btn-back" onclick="changeLocation()">← Changer zone / ligne</button>
+    </div>
+
+    <!-- S5 : Liste -->
+    <div id="s5" style="display:none">
+      <div class="counter-bar">
+        <div>
+          <div class="counter-val" id="totalCount">0</div>
+          <div class="counter-lbl">conteneurs enregistrés</div>
+        </div>
+        <button class="btn btn-outline" style="padding:10px 14px;font-size:13px;" onclick="goStep(4)">+ Ajouter</button>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr><th>N° CONTENEUR</th><th>ZONE</th><th>SS-ZONE</th><th>LIGNE</th><th></th></tr></thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyMsg">Aucun conteneur enregistré<br>↑ Appuyez sur Ajouter</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-excel btn-full" onclick="downloadExcel()">⬇ Télécharger le fichier Excel</button>
+        <button class="btn btn-outline" onclick="goStep(4)">+ Nouveau scan</button>
+        <button class="btn btn-danger" onclick="clearAll()">🗑 Effacer tout</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL QUITTER -->
+<div class="modal-bg" id="quitModal">
+  <div class="modal">
+    <h2>Quitter la session ?</h2>
+    <p>⚠️ Les données seront effacées.<br>Téléchargez le fichier Excel avant de quitter si nécessaire.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-danger" onclick="doQuit()">Quitter</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PASSWORD = "terminal2024";
+const ZONES = {
+  'DAR SALAM':{ subzones:['Cavalier 1','Cavalier 2','Cavalier 3','Cavalier 4','Cavalier 5','Cavalier 6'], maxLine:15 },
+  'TAC':      { subzones:['Nord','Sud'], maxLine:40 }
+};
+
+let state = { zone:'', subzone:'', ligne:'', cameraOn:false, stream:null };
+let records = []; // Pas de localStorage : session fraîche à chaque connexion
+
+function doLogin() {
+  if(document.getElementById('pwdInput').value === PASSWORD) {
+    records = [];
+    state = { zone:'', subzone:'', ligne:'', cameraOn:false, stream:null };
+    document.getElementById('loginErr').style.display='none';
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appScreen').classList.add('active');
+    refreshTable(); goStep(1);
+  } else {
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+function confirmQuit(){ document.getElementById('quitModal').classList.add('open'); }
+function closeModal(){ document.getElementById('quitModal').classList.remove('open'); }
+function doQuit(){
+  closeModal(); stopCamera();
+  records=[]; state={ zone:'', subzone:'', ligne:'', cameraOn:false, stream:null };
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('loginScreen').classList.add('active');
+  document.getElementById('pwdInput').value='';
+}
+
+function goStep(n){
+  [1,2,3,4,5].forEach(i=>document.getElementById('s'+i).style.display=i===n?'':'none');
+  for(let i=1;i<=4;i++){
+    document.getElementById('seg'+i).className='step-seg'+(i<n?' done':i===n?' active':'');
+    document.getElementById('lbl'+i).className=i===n?'active-lbl':'';
+  }
+  if(n!==4) stopCamera();
+}
+function goList(){ refreshTable(); goStep(5); }
+
+function selectZone(z){
+  state.zone=z;
+  document.getElementById('zBtn_DS').classList.toggle('active',z==='DAR SALAM');
+  document.getElementById('zBtn_TAC').classList.toggle('active',z==='TAC');
+  const cfg=ZONES[z], grid=document.getElementById('subGrid');
+  grid.innerHTML='';
+  grid.className=cfg.subzones.length<=2?'grid2':'grid3';
+  cfg.subzones.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='sel-btn'; d.textContent=s;
+    d.onclick=()=>selectSubzone(s); grid.appendChild(d);
+  });
+  setCtx('ctxChips1',[{cls:'chip-blue',txt:z}]); goStep(2);
+}
+
+function selectSubzone(s){
+  state.subzone=s;
+  document.querySelectorAll('#subGrid .sel-btn').forEach(b=>b.classList.toggle('active',b.textContent===s));
+  document.getElementById('ligneHint').textContent='Lignes disponibles : L1 à L'+ZONES[state.zone].maxLine;
+  document.getElementById('ligneInput').value='';
+  setCtx('ctxChips2',[{cls:'chip-blue',txt:state.zone},{cls:'chip-amber',txt:s}]); goStep(3);
+}
+
+function confirmLigne(){
+  let val=document.getElementById('ligneInput').value.trim().toUpperCase();
+  if(!val){toast('Saisissez un numéro de ligne','err');return;}
+  if(!val.startsWith('L')) val='L'+val;
+  const num=parseInt(val.replace('L','')), max=ZONES[state.zone].maxLine;
+  if(isNaN(num)||num<1||num>max){toast('Ligne invalide — L1 à L'+max,'err');return;}
+  state.ligne=val;
+  setCtx('ctxChips3',[{cls:'chip-blue',txt:state.zone},{cls:'chip-amber',txt:state.subzone},{cls:'chip-green',txt:state.ligne}]);
+  document.getElementById('ocrBox').style.display='none';
+  document.getElementById('confirmBtn').style.display='none';
+  goStep(4);
+}
+
+function setCtx(id,chips){
+  document.getElementById(id).innerHTML=chips.map(c=>`<span class="chip ${c.cls}">${c.txt}</span>`).join('');
+}
+
+async function toggleCamera(){
+  if(state.cameraOn){
+    stopCamera();
+    return;
+  }
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast("Caméra non supportée", "err");
+    return;
+  }
+
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+
+    state.stream = stream;
+    state.cameraOn = true;
+
+    const v = document.getElementById('videoEl');
+    v.srcObject = stream;
+    v.style.display = 'block';
+
+    document.getElementById('camPh').style.display = 'none';
+    document.getElementById('camBtn').textContent = '✕ Fermer';
+    document.getElementById('captureBtn').style.display = '';
+
+  } catch (e) {
+
+    console.error(e);
+
+    if(e.name === "NotAllowedError"){
+      toast("❌ Permission refusée", "err");
+    } else {
+      toast("❌ Erreur caméra", "err");
+    }
+
+    alert("👉 Active la caméra dans les paramètres !");
+  }
+}
+async function captureAndOCR(){
+  const v=document.getElementById('videoEl'), c=document.getElementById('canvasEl');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  document.getElementById('scanOverlay').style.display='flex';
+  stopCamera();
+  if(typeof Tesseract==='undefined'){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://unpkg.com/tesseract.js@4/dist/tesseract.min.js';
+      s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+  try{
+    const result=await Tesseract.recognize(c,'eng',{logger:()=>{}});
+    const text=result.data.text.toUpperCase();
+    const match=text.match(/[A-Z]{4}\s*[0-9]{7}/);
+    const detected=match?match[0].replace(/\s/g,''):text.replace(/[^A-Z0-9]/g,'').substring(0,11);
+    document.getElementById('scanOverlay').style.display='none';
+    showResult(detected);
+  }catch(e){
+    document.getElementById('scanOverlay').style.display='none';
+    showResult(''); toast('Lecture échouée — saisie manuelle','err');
+  }
+}
+
+function showResult(num){
+  document.getElementById('numField').value=num;
+  document.getElementById('ocrBox').style.display='';
+  document.getElementById('confirmBtn').style.display='';
+  document.getElementById('numField').focus();
+}
+
+function manualEntry(){
+  stopCamera();
+  document.getElementById('numField').value='';
+  document.getElementById('ocrBox').style.display='';
+  document.getElementById('confirmBtn').style.display='';
+  document.getElementById('numField').focus();
+}
+
+function confirmContainer(){
+  const num=document.getElementById('numField').value.trim().toUpperCase();
+  if(!num){toast('Saisissez un numéro de conteneur','err');return;}
+  records.push({numero:num,zone:state.zone,subzone:state.subzone,ligne:state.ligne,ts:new Date().toISOString()});
+  refreshTable();
+  document.getElementById('numField').value='';
+  document.getElementById('ocrBox').style.display='none';
+  document.getElementById('confirmBtn').style.display='none';
+  toast('✓ '+num+' enregistré','ok'); goList();
+}
+
+function changeLocation(){ stopCamera(); goStep(1); }
+
+function refreshTable(){
+  const total=records.length;
+  document.getElementById('totalCount').textContent=total;
+  document.getElementById('listCount').textContent=total;
+  document.getElementById('emptyMsg').style.display=total?'none':'';
+  document.getElementById('recordsBody').innerHTML=records.map((r,i)=>`<tr>
+    <td class="num-cell">${r.numero}</td>
+    <td style="font-size:11px;color:var(--text2)">${r.zone}</td>
+    <td style="font-size:11px;color:var(--text2)">${r.subzone}</td>
+    <td style="font-size:11px;color:var(--text2)">${r.ligne}</td>
+    <td><button class="del-btn" onclick="deleteRecord(${i})">×</button></td>
+  </tr>`).join('');
+}
+
+function deleteRecord(i){
+  if(confirm('Supprimer ce conteneur ?')){records.splice(i,1);refreshTable();}
+}
+function clearAll(){
+  if(confirm('Effacer TOUS les enregistrements ?')){records=[];refreshTable();}
+}
+
+function downloadExcel(){
+  if(!records.length){toast('Aucun conteneur à exporter','err');return;}
+  const ws=XLSX.utils.json_to_sheet(records.map(r=>({
+    'N° Conteneur':r.numero,'Zone':r.zone,'Sous-zone':r.subzone,
+    'Ligne':r.ligne,'Date/Heure':new Date(r.ts).toLocaleString('fr-FR')
+  })));
+  ws['!cols']=[{wch:16},{wch:12},{wch:12},{wch:8},{wch:20}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Conteneurs');
+  XLSX.writeFile(wb,`conteneurs_${new Date().toISOString().split('T')[0]}.xlsx`);
+  toast('✓ Fichier Excel téléchargé','ok');
+}
+
+let toastTimer;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.className='toast';},2800);
+}
+
+document.getElementById('quitModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
+</body>
+</html>
